@@ -1,4 +1,3 @@
-/* ─── Design tokens ─────────────────────────────────────────── */
 :root {
   --bg:           #0d0d0d;
   --surface:      #141414;
@@ -24,7 +23,6 @@
   --navbar-h: 64px;
 }
 
-/* ─── Reset ─────────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -47,7 +45,6 @@ img   { display: block; max-width: 100%; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }
 a     { color: inherit; text-decoration: none; }
 
-/* ─── App shell ─────────────────────────────────────────────── */
 .app {
   display: flex;
   flex-direction: column;
@@ -74,7 +71,6 @@ a     { color: inherit; text-decoration: none; }
   margin-bottom: 16px;
 }
 
-/* ─── Status messages ───────────────────────────────────────── */
 .app__message {
   display: flex;
   flex-direction: column;
@@ -91,7 +87,6 @@ a     { color: inherit; text-decoration: none; }
   color: var(--accent);
 }
 
-/* ─── Movie grid ────────────────────────────────────────────── */
 .app__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -110,7 +105,6 @@ a     { color: inherit; text-decoration: none; }
   }
 }
 
-/* ─── Navbar ────────────────────────────────────────────────── */
 .navbar {
   position: fixed;
   inset: 0 0 auto 0;
@@ -185,8 +179,6 @@ a     { color: inherit; text-decoration: none; }
   transform: translateY(0);
 }
 
-/* ─── Filter bar ────────────────────────────────────────────── */
-
 .filter-bar {
   display: flex;
   gap: 8px;
@@ -216,7 +208,6 @@ a     { color: inherit; text-decoration: none; }
   background: var(--accent);
 }
 
-/* ─── Movie card ────────────────────────────────────────────── */
 .movie-card {
   position: relative;
   border-radius: var(--radius-md);
@@ -252,7 +243,6 @@ a     { color: inherit; text-decoration: none; }
   transform: scale(1.06);
 }
 
-/* Info overlay — slides up on hover */
 .movie-card__info {
   position: absolute;
   inset: 0;
@@ -303,7 +293,6 @@ a     { color: inherit; text-decoration: none; }
   letter-spacing: 0.05em;
 }
 
-/* ─── Movie modal ───────────────────────────────────────────── */
 .movie-modal__overlay {
   position: fixed;
   inset: 0;
@@ -359,13 +348,12 @@ a     { color: inherit; text-decoration: none; }
   transform: scale(1.1);
 }
 
-/* Modal layout: poster left + info right on wide screens */
 .movie-modal h2 {
   font-size: clamp(18px, 3vw, 26px);
   font-weight: 800;
   letter-spacing: -0.03em;
   margin-bottom: 16px;
-  padding-right: 40px; /* avoid overlap with close btn */
+  padding-right: 40px;
   line-height: 1.2;
 }
 
@@ -390,14 +378,12 @@ a     { color: inherit; text-decoration: none; }
   margin-right: 4px;
 }
 
-/* Clearfix so overlay doesn't collapse behind float */
 .movie-modal::after {
   content: '';
   display: block;
   clear: both;
 }
 
-/* ─── Animations ────────────────────────────────────────────── */
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -408,19 +394,16 @@ a     { color: inherit; text-decoration: none; }
   to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
 
-/* ─── Scrollbar global ──────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-/* ─── Focus visible ─────────────────────────────────────────── */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 
-/* ─── Responsive ────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .navbar {
     gap: 12px;
@@ -431,7 +414,7 @@ a     { color: inherit; text-decoration: none; }
   }
 
   .navbar__search button {
-    display: none; /* search on Enter only on mobile */
+    display: none;
   }
 
   .movie-modal__poster {
@@ -450,12 +433,4 @@ a     { color: inherit; text-decoration: none; }
   }
 
   .filter-bar::-webkit-scrollbar { display: none; }
-}
-
-/* ─── Reduced motion ────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
 }
