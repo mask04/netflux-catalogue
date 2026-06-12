@@ -1,152 +1,99 @@
-from fastapi import FastAPI
+import os
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Optional
+from dotenv import load_dotenv
+import httpx
 
-app = FastAPI(title="Netflix Catalogue API")
+load_dotenv()
+
+OMDB_API_KEY = os.getenv("OMDB_API_KEY")
+OMDB_BASE_URL = "https://www.omdbapi.com/"
+
+app = FastAPI(title="Netflux Catalogue API")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-MOVIES = [
-    {
-        "id": 1,
-        "title": "Stranger Things",
-        "type": "serie",
-        "genre": "Sci-Fi",
-        "year": 2022,
-        "rating": 96,
-        "description": "Des ados d'Hawkins affrontent des forces surnaturelles.",
-        "thumbnail": "🌌",
-        "color": "#1a1a3e",
-        "seasons": 4,
-        "is_new": False,
-    },
-    {
-        "id": 2,
-        "title": "Dark",
-        "type": "serie",
-        "genre": "Sci-Fi",
-        "year": 2020,
-        "rating": 97,
-        "description": "Quatre familles piégées dans un cycle temporel à Winden.",
-        "thumbnail": "⏳",
-        "color": "#1e0e2b",
-        "seasons": 3,
-        "is_new": False,
-    },
-    {
-        "id": 3,
-        "title": "The Last of Us",
-        "type": "serie",
-        "genre": "Drame",
-        "year": 2023,
-        "rating": 98,
-        "description": "Un survivant escorte une jeune fille à travers un monde ravagé.",
-        "thumbnail": "🏚",
-        "color": "#2d1b1b",
-        "seasons": 1,
-        "is_new": True,
-    },
-    {
-        "id": 4,
-        "title": "Breaking Bad",
-        "type": "serie",
-        "genre": "Thriller",
-        "year": 2013,
-        "rating": 99,
-        "description": "Un prof de chimie devient le plus grand fabricant de drogue du Nouveau-Mexique.",
-        "thumbnail": "🏜️",
-        "color": "#2b1e0e",
-        "seasons": 5,
-        "is_new": False,
-    },
-    {
-        "id": 5,
-        "title": "Wednesday",
-        "type": "serie",
-        "genre": "Comédie",
-        "year": 2023,
-        "rating": 88,
-        "description": "Les aventures surnaturelles de Wednesday Addams à l'académie Nevermore.",
-        "thumbnail": "🎭",
-        "color": "#2d1b2d",
-        "seasons": 1,
-        "is_new": True,
-    },
-    {
-        "id": 6,
-        "title": "Inception",
-        "type": "film",
-        "genre": "Sci-Fi",
-        "year": 2010,
-        "rating": 94,
-        "description": "Un voleur s'infiltre dans les rêves pour planter une idée.",
-        "thumbnail": "🌀",
-        "color": "#0e1e2b",
-        "seasons": None,
-        "is_new": False,
-    },
-    {
-        "id": 7,
-        "title": "Squid Game",
-        "type": "serie",
-        "genre": "Thriller",
-        "year": 2022,
-        "rating": 92,
-        "description": "Des candidats endettés jouent leur vie dans des jeux mortels.",
-        "thumbnail": "🃏",
-        "color": "#2b0e0e",
-        "seasons": 2,
-        "is_new": True,
-    },
-    {
-        "id": 8,
-        "title": "Black Mirror",
-        "type": "serie",
-        "genre": "Sci-Fi",
-        "year": 2023,
-        "rating": 90,
-        "description": "Anthologie sur les dérives technologiques de notre société.",
-        "thumbnail": "🔬",
-        "color": "#0e1e2b",
-        "seasons": 6,
-        "is_new": True,
-    },
-]
 
-@app.get("/movies", response_model=List[dict])
-def get_movies(genre: Optional[str] = None, type: Optional[str] = None):
-    """
-    Retourne tous les films/séries.
-    Paramètres optionnels :
-      - genre : filtre par genre (ex: Sci-Fi, Thriller)
-      - type  : filtre par type (film ou serie)
-    """
-    results = MOVIES
-    if genre:
-        results = [m for m in results if m["genre"].lower() == genre.lower()]
-    if type:
-        results = [m for m in results if m["type"].lower() == type.lower()]
-    return results
+def check_api_key():
+    if not OMDB_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="OMDB_API_KEY manquante. Verifie ton fichier .env",
+        )
 
-@app.get("/movies/{movie_id}")
-def get_movie(movie_id: int):
-    """
-    Retourne un film/série par son ID.
-    """
-    for movie in MOVIES:
-        if movie["id"] == movie_id:
-            return movie
-    return {"error": "Film non trouvé"}, 404
+
+@app.get("/")
+def root():
+    return {"message": "Netflux Catalogue API - voir /docs pour la documentation"}
+
+
+@app.get("/search")
+async def search_movies(q: str = Query(..., min_length=1, description="Titre a rechercher")):
+    """Recherche des films/series via OMDB (?s=...)"""
+    check_api_key()
+
+    params = {"s": q, "apikey": OMDB_API_KEY}
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(OMDB_BASE_URL, params=params, timeout=10.0)
+        except httpx.RequestError:
+            # API OMDB injoignable
+            raise HTTPException(status_code=502, detail="API OMDB injoignable")
+
+    data = response.json()
+
+    if data.get("Response") == "False":
+        raise HTTPException(
+            status_code=404,
+            detail=data.get("Error", "Aucun titre trouve pour cette recherche"),
+        )
+
+    return data
+
+
+@app.get("/movies/{imdb_id}")
+async def get_movie(imdb_id: str):
+    """Detail complet d'un film via OMDB (?i=...)"""
+    check_api_key()
+
+    params = {"i": imdb_id, "apikey": OMDB_API_KEY}
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(OMDB_BASE_URL, params=params, timeout=10.0)
+        except httpx.RequestError:
+            raise HTTPException(status_code=502, detail="API OMDB injoignable")
+
+    data = response.json()
+
+    if data.get("Response") == "False":
+        raise HTTPException(status_code=404, detail="Film introuvable")
+
+    return data
+
 
 @app.get("/genres")
 def get_genres():
     """
-    Retourne la liste de tous les genres disponibles.
+    Liste de genres disponibles pour le filtre.
+    OMDB ne fournit pas d'endpoint dedie -> liste statique cote back.
+    A adapter selon les besoins du FilterBar.
     """
-    genres = list(set(m["genre"] for m in MOVIES))
-    return {"genres": sorted(genres)}
+    return {
+        "genres": [
+            "Action",
+            "Comedy",
+            "Drama",
+            "Horror",
+            "Sci-Fi",
+            "Animation",
+            "Documentary",
+        ]
+    }
