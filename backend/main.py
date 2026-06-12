@@ -34,7 +34,7 @@ def root():
 
 
 @app.get("/search")
-async def search_movies(q: str = Query(..., min_length=1, description="Titre a rechercher")):
+async def search_movies(q: str = Query(..., min_length=0, description="Titre a rechercher")):
     """Recherche des films/series via OMDB (?s=...)"""
     check_api_key()
 

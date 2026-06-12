@@ -6,46 +6,65 @@ import MovieModal from "./components/MovieModal";
 import { searchMovies, getMovieDetails } from "./services/api";
 import "./App.css";
 
+const DEFAULT_CATEGORIES = [
+  { title: "Populaires", query: "love" },
+  { title: "Action & Aventure", query: "war" },
+  { title: "Suggestions", query: "man" },
+];
+
 function App() {
-
   const [searchValue, setSearchValue] = useState("");
-  const [movies, setMovies] = useState([]);
-
   const [activeFilter, setActiveFilter] = useState("all");
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [rows, setRows] = useState([]);
+  const [isLoadingRows, setIsLoadingRows] = useState(false);
+
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState(null);
 
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [isModalLoading, setIsModalLoading] = useState(false);
 
-  async function handleSearch() {
-    if (!searchValue.trim()) return;
+  useEffect(() => {
+    async function loadDefaultRows() {
+      setIsLoadingRows(true);
+      try {
+        const results = await Promise.all(
+          DEFAULT_CATEGORIES.map((cat) =>
+            searchMovies(cat.query)
+              .then((data) => ({ title: cat.title, movies: data.Search || [] }))
+              .catch(() => ({ title: cat.title, movies: [] }))
+          )
+        );
+        setRows(results);
+      } finally {
+        setIsLoadingRows(false);
+      }
+    }
+    loadDefaultRows();
+  }, []);
 
-    setIsLoading(true);
+  async function handleSearchSubmit() {
+    const query = searchValue.trim();
+    if (!query) {
+      setSearchResults(null);
+      return;
+    }
+
+    setIsSearching(true);
     setError(null);
 
     try {
-      const data = await searchMovies(searchValue);
-      setMovies(data.Search || []);
+      const data = await searchMovies(query);
+      setSearchResults(data.Search || []);
     } catch (err) {
       setError(err.message);
-      setMovies([]);
+      setSearchResults([]);
     } finally {
-      setIsLoading(false);
+      setIsSearching(false);
     }
   }
-
-  useEffect(() => {
-    setSearchValue("");
-  }, []);
-
-  useEffect(() => {
-    if (searchValue) {
-      handleSearch();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchValue]);
 
   async function handleSelectMovie(movie) {
     setIsModalLoading(true);
@@ -66,37 +85,65 @@ function App() {
     setSelectedMovie(null);
   }
 
-  const filteredMovies = movies.filter((movie) => {
-    if (activeFilter === "all") return true;
-    return movie.Type === activeFilter;
-  });
+  function applyFilter(list) {
+    return list.filter((movie) => {
+      if (activeFilter === "all") return true;
+      return movie.Type === activeFilter;
+    });
+  }
+
+  const isSearchMode = searchResults !== null;
 
   return (
     <div className="app">
       <Navbar
         searchValue={searchValue}
         onSearchChange={setSearchValue}
-        onSearchSubmit={handleSearch}
+        onSearchSubmit={handleSearchSubmit}
       />
 
       <FilterBar activeFilter={activeFilter} onFilterChange={setActiveFilter} />
 
       <main className="app__content">
-        {isLoading && <p className="app__message">Chargement...</p>}
+        {error && <p className="app__message app__message--error">{error}</p>}
 
-        {error && !isLoading && (
-          <p className="app__message app__message--error">{error}</p>
+        {isSearchMode ? (
+          <>
+            {isSearching && <p className="app__message">Chargement...</p>}
+
+            {!isSearching && applyFilter(searchResults).length === 0 && (
+              <p className="app__message">Aucun titre trouvé pour cette recherche</p>
+            )}
+
+            <div className="app__grid">
+              {applyFilter(searchResults).map((movie) => (
+                <MovieCard key={movie.imdbID} movie={movie} onSelect={handleSelectMovie} />
+              ))}
+            </div>
+          </>
+        ) : (
+          // ── Mode accueil : rangées par catégorie ──
+          <>
+            {isLoadingRows && <p className="app__message">Chargement...</p>}
+
+            {!isLoadingRows &&
+              rows.map((row) => {
+                const filtered = applyFilter(row.movies);
+                if (filtered.length === 0) return null;
+
+                return (
+                  <section className="app__row" key={row.title}>
+                    <h2 className="app__row-title">{row.title}</h2>
+                    <div className="app__grid">
+                      {filtered.map((movie) => (
+                        <MovieCard key={movie.imdbID} movie={movie} onSelect={handleSelectMovie} />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+          </>
         )}
-
-        {!isLoading && !error && filteredMovies.length === 0 && (
-          <p className="app__message">Aucun titre trouve pour cette recherche</p>
-        )}
-
-        <div className="app__grid">
-          {filteredMovies.map((movie) => (
-            <MovieCard key={movie.imdbID} movie={movie} onSelect={handleSelectMovie} />
-          ))}
-        </div>
       </main>
 
       <MovieModal
