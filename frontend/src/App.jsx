@@ -3,7 +3,7 @@ import Navbar from "./components/Navbar";
 import FilterBar from "./components/FilterBar";
 import MovieCard from "./components/MovieCard";
 import MovieModal from "./components/MovieModal";
-import { searchMovies, toggleFavorites } from "./services/api";
+import { searchMovies, getMovieDetails } from "./services/api";
 import "./App.css";
 
 function App() {
@@ -37,7 +37,7 @@ function App() {
   }
 
   useEffect(() => {
-    setSearchValue("Recherchez un film/série...");
+    setSearchValue("");
   }, []);
 
   useEffect(() => {
@@ -52,7 +52,7 @@ function App() {
     setSelectedMovie({});
 
     try {
-      const details = await toggleFavorites(movie.imdbID);
+      const details = await getMovieDetails(movie.imdbID);
       setSelectedMovie(details);
     } catch (err) {
       setError(err.message);
