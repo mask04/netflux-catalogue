@@ -3,11 +3,11 @@ import Navbar from "./components/Navbar";
 import FilterBar from "./components/FilterBar";
 import MovieCard from "./components/MovieCard";
 import MovieModal from "./components/MovieModal";
-import { searchMovies, getMovieDetails } from "./services/api";
+import { searchMovies, toggleFavorites } from "./services/api";
 import "./App.css";
 
 function App() {
-  
+
   const [searchValue, setSearchValue] = useState("");
   const [movies, setMovies] = useState([]);
 
@@ -37,22 +37,22 @@ function App() {
   }
 
   useEffect(() => {
-    setSearchValue("Recherchez votre film/série...");
+    setSearchValue("Recherchez un film/série...");
   }, []);
 
   useEffect(() => {
     if (searchValue) {
       handleSearch();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchValue]);
 
-  
   async function handleSelectMovie(movie) {
     setIsModalLoading(true);
     setSelectedMovie({});
 
     try {
-      const details = await getMovieDetails(movie.imdbID);
+      const details = await toggleFavorites(movie.imdbID);
       setSelectedMovie(details);
     } catch (err) {
       setError(err.message);
@@ -89,7 +89,7 @@ function App() {
         )}
 
         {!isLoading && !error && filteredMovies.length === 0 && (
-          <p className="app__message">Aucun titre trouvé pour cette recherche</p>
+          <p className="app__message">Aucun titre trouve pour cette recherche</p>
         )}
 
         <div className="app__grid">
