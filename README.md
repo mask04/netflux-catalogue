@@ -2,33 +2,33 @@
 
 SPA React + API Python (FastAPI) - Catalogue de films/series via OMDB API.
 
-## Demarrage rapide
+## Démarrage rapide
 
 ### Backend
+
 ```bash
 cd backend
 pip install -r requirements.txt
-cp .env.example .env   # puis renseigner OMDB_API_KEY
+echo "OMDB_API_KEY=ta_clé" > .env
 uvicorn main:app --reload
 ```
--> http://localhost:8000 (docs sur /docs)
+-> API disponible sur http://localhost:8000 (docs sur /docs)
+
+> ⚠️ Génère ta clé gratuite sur https://www.omdbapi.com/apikey.aspx
+> et confirme-la via l'email reçu avant utilisation.
 
 ### Frontend
+
 ```bash
 cd frontend
 npm install
 npm start
 ```
--> http://localhost:3000
+-> App disponible sur http://localhost:3000
+
+> Le frontend n'a pas besoin de clé API : il passe par le backend
+> (http://localhost:8000), qui se charge des appels vers OMDB.
 
 ## Structure
-Voir le document de specs complet (netflux-README.docx) pour le detail
-des criteres d'evaluation, la repartition des taches et l'architecture.
-
-## A faire (TODO equipe)
-- [ ] Backend : verifier les routes /search, /movies/{id}, /genres
-- [ ] Frontend : brancher la recherche reelle (App.jsx fait une recherche par defaut "batman")
-- [ ] FilterBar : adapter les filtres Type (movie/series) selon OMDB
-- [ ] MovieModal : verifier l'affichage des champs OMDB
-- [ ] Tests cross-navigateur + responsive mobile
-- [ ] Verifier zero erreur console (PropTypes, keys)
+Voir le document de specs complet (netflux-README.docx) pour le détail
+des critères d'évaluation, la répartition des tâches et l'architecture.
